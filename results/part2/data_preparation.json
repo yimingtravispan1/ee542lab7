@@ -1,0 +1,64 @@
+{
+  "dataset": "microsoft/cats_vs_dogs",
+  "source_url": "https://huggingface.co/datasets/microsoft/cats_vs_dogs",
+  "revision": "b5ae3589204019bc2cc97e99e4914a54589333ef",
+  "label_mapping": {
+    "0": "cat",
+    "1": "dog"
+  },
+  "split_seed": 42,
+  "train_fraction_per_class": 0.8,
+  "split_method": "seeded stratified split after exact-byte deduplication",
+  "counts": {
+    "train": {
+      "cat": 9380,
+      "dog": 9328
+    },
+    "test": {
+      "cat": 2346,
+      "dog": 2332
+    }
+  },
+  "usable_unique_images": 23386,
+  "duplicate_rows_removed": 24,
+  "duplicate_sources": [
+    "train-00000-of-00002.parquet:2076",
+    "train-00000-of-00002.parquet:3025",
+    "train-00000-of-00002.parquet:3330",
+    "train-00000-of-00002.parquet:3748",
+    "train-00000-of-00002.parquet:4793",
+    "train-00000-of-00002.parquet:5380",
+    "train-00000-of-00002.parquet:5930",
+    "train-00000-of-00002.parquet:6076",
+    "train-00000-of-00002.parquet:6172",
+    "train-00000-of-00002.parquet:6237",
+    "train-00000-of-00002.parquet:7785",
+    "train-00000-of-00002.parquet:9578",
+    "train-00000-of-00002.parquet:9813",
+    "train-00000-of-00002.parquet:10951",
+    "train-00000-of-00002.parquet:11309",
+    "train-00001-of-00002.parquet:4548",
+    "train-00001-of-00002.parquet:8288",
+    "train-00001-of-00002.parquet:9019",
+    "train-00001-of-00002.parquet:9686",
+    "train-00001-of-00002.parquet:9728",
+    "train-00001-of-00002.parquet:10251",
+    "train-00001-of-00002.parquet:10397",
+    "train-00001-of-00002.parquet:11499",
+    "train-00001-of-00002.parquet:11660"
+  ],
+  "skipped_images": [],
+  "preparation_seconds": 80.07670479999797,
+  "shards": [
+    {
+      "file": "train-00000-of-00002.parquet",
+      "bytes": 330245704,
+      "sha256": "d2a40bc460fc9ac12a4a0edbe44476cbed5dd0829a8cbc08af9bcbbea5cc9620"
+    },
+    {
+      "file": "train-00001-of-00002.parquet",
+      "bytes": 391396716,
+      "sha256": "568276cea0e7ee4173847ab3db33d3b64c3ec8fd061e2f3b336d0f48d791421e"
+    }
+  ]
+}

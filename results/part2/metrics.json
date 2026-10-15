@@ -1,0 +1,60 @@
+{
+  "python": "3.13.15",
+  "numpy": "2.5.4",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "processor": "Intel64 Family 6 Model 197 Stepping 2, GenuineIntel",
+  "device": "CPU",
+  "dataset_revision": "b5ae3589204019bc2cc97e99e4914a54589333ef",
+  "split_seed": 42,
+  "counts": {
+    "train": {
+      "cat": 9380,
+      "dog": 9328
+    },
+    "test": {
+      "cat": 2346,
+      "dog": 2332
+    }
+  },
+  "model_seed": 0,
+  "architecture": "64x64x3 -> fixed valid 3x3x3 conv -> ReLU -> 2x2 maxpool -> 961 -> FC(1) -> ReLU",
+  "trainable_parameters": 962,
+  "fixed_convolution_parameters": 27,
+  "epochs": 10,
+  "learning_rate": 0.001,
+  "sgd_batch_size": 1,
+  "feature_batch_size": 64,
+  "test_block_size": 512,
+  "dtype": "float64",
+  "resize": "Pillow RGB BICUBIC",
+  "prediction_threshold": 0.5,
+  "training_order": "seeded shuffle once, same order each epoch",
+  "fixed_feature_reuse": true,
+  "initial_train_mse": 0.49785956450384,
+  "final_train_mse": 0.24476661162228516,
+  "train_accuracy": 0.6048749198203976,
+  "test_mse": 0.24521219312365336,
+  "test_accuracy": 0.5899957246686618,
+  "test_majority_baseline": 0.5014963659683626,
+  "test_confusion_rows_true_cols_predicted": [
+    [
+      1315,
+      1031
+    ],
+    [
+      887,
+      1445
+    ]
+  ],
+  "test_zero_output_fraction": 0.0,
+  "convolution_unchanged": true,
+  "timing_seconds": {
+    "training_load_resize_conv_pool": 166.4118155999895,
+    "training_sgd_and_epoch_metrics": 3.0306133999984013,
+    "training_total": 169.4424289999879,
+    "test_load_resize_conv_pool_fc": 39.474395300014294,
+    "run_including_exports": 209.59634079999523
+  },
+  "test_images_per_second": 118.50719851301449,
+  "test_ms_per_image": 8.438305964090272
+}
