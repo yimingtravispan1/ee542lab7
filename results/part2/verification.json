@@ -1,0 +1,9 @@
+{
+  "convolution_matches_pdf_loops": true,
+  "pooling_matches_pdf_loops_including_odd_width": true,
+  "flattened_features": 961,
+  "fc_gradient_max_absolute_error": 5.696262905807714e-11,
+  "sgd_reduces_loss_on_fixture": true,
+  "convolution_remains_fixed": true,
+  "inactive_output_relu_has_zero_gradient": true
+}
