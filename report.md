@@ -1,6 +1,6 @@
 # Laboratory 7 Report - Parts I and II
 
-This report covers Parts I and II of `lab7.pdf`. Sections 1-7 cover Part I (pages 1-10); Section 8 answers the Part II evaluation tasks (pages 10-12). All numerical results come from actual local execution. Additional Part II implementation details are available in [part2-report.md](part2-report.md). Part III has not been started.
+This report covers Parts I and II of `lab7.pdf`. Sections 1-7 cover Part I (pages 1-10); Section 8 answers the Part II evaluation tasks (pages 10-12). All numerical results come from actual local execution. Part III has not been started.
 
 Part I has no separate numbered question list. Sections 1-4 answer its explanatory points and discuss all three examples; Section 6 maps these responses to the PDF.
 
@@ -8,7 +8,7 @@ Part I has no separate numbered question list. Sections 1-4 answer its explanato
 
 A perceptron applies an activation to a weighted input sum plus bias. An MLP connects these units in fully connected, feedforward layers. ReLU introduces nonlinearity; without it, stacked affine layers would remain a single affine mapping. More layers or neurons increase representational capacity and training cost.
 
-The implementation is in [src/part1.py](../src/part1.py). Following the PDF example code, the model has one hidden layer and two fully connected layers with trainable parameters:
+The implementation is in [src/part1.py](src/part1.py). Following the PDF example code, the model has one hidden layer and two fully connected layers with trainable parameters:
 
 ```text
 Input X -> Z1 = XW1 + b1 -> H1 = ReLU(Z1) -> Z2 = H1W2 + b2
@@ -62,9 +62,9 @@ These parameters, training data seeds, and model seeds match the PDF. An additio
 | Binary classification | 0.958286 | 0.281615 | 99.875% |
 | Multiclass classification | 1.778096 | 0.144010 | 95.111% |
 
-The recorded environment is Python 3.13.15 and NumPy 2.5.4 on CPU. As optional evaluation beyond Part I, independent ring and blob test accuracies are 99.900% and 95.233%, respectively. Detailed metrics and timings remain in [metrics.json](../results/part1/metrics.json).
+The recorded environment is Python 3.13.15 and NumPy 2.5.4 on CPU. As optional evaluation beyond Part I, independent ring and blob test accuracies are 99.900% and 95.233%, respectively. Detailed metrics and timings remain in [metrics.json](results/part1/metrics.json).
 
-![Loss curves for all three experiments](../results/part1/loss_curves.png)
+![Loss curves for all three experiments](results/part1/loss_curves.png)
 
 ### 4.1 1D Regression
 
@@ -82,7 +82,7 @@ The ordinary training MSE is **0.00354938**. The MSE against the noiseless targe
 | 1.5 | 0.950000 | 0.948054 |
 | 2.0 | 1.200000 | 1.176670 |
 
-![Regression fit](../results/part1/regression.png)
+![Regression fit](results/part1/regression.png)
 
 Each ReLU unit is active over part of the x-axis, and their weighted sum forms a piecewise-linear fit. Backpropagation and SGD reduce squared error on noisy samples. The model learns the overall trend but does not fully capture the breakpoints at `x=-0.4` and `x=0.5`; at `x=0` it predicts 0.259591 instead of 0.35.
 
@@ -90,7 +90,7 @@ Each ReLU unit is active over part of the x-axis, and their weighted sum forms a
 
 The model correctly classifies **799/800** training samples (99.875%); class 0 is the inner ring and class 1 is the outer ring.
 
-![Concentric-ring classification boundary](../results/part1/binary_boundary.png)
+![Concentric-ring classification boundary](results/part1/binary_boundary.png)
 
 A single straight line cannot separate the concentric rings. Multiple ReLU activation regions combine into an approximately closed polygonal boundary that separates the inner and outer rings. High accuracy can coexist with a cross-entropy of 0.281615 because a correct prediction does not require the true class probability to be close to 1.
 
@@ -98,23 +98,22 @@ A single straight line cannot separate the concentric rings. Multiple ReLU activ
 
 The model correctly classifies **856/900** training samples (95.111%).
 
-![Three-blob classification boundary](../results/part1/multiclass_boundary.png)
+![Three-blob classification boundary](results/part1/multiclass_boundary.png)
 
 ReLU units form multiple linear regions to separate the clusters. Three Softmax outputs provide class probabilities, and `argmax` selects the predicted class. Most independent-test errors involve the central blob and an outer blob; overlapping Gaussian distributions make perfect separation unlikely.
 
 ## 5. Verification and Reproduction
 
-[scripts/verify_part1.py](../scripts/verify_part1.py) provides optional numerical checks. Regression and classification gradients pass finite-difference checks (maximum absolute errors `2.27e-9` and `9.45e-11`), and Softmax remains finite and normalized for large logits. All three experiments have finite losses below their initial values.
+Previously executed numerical checks are recorded in [verification.json](results/part1/verification.json): maximum regression and classification gradient errors were `2.27e-9` and `9.45e-11`, and the Softmax stability check passed. These are archived results; the optional verification scripts have been removed. All three experiments have finite losses below their initial values.
 
 Run from the project root; dependency installation is needed only for a fresh environment:
 
 ```powershell
 python -m pip install --target .packages -r requirements.txt
 python src/part1.py
-python scripts/verify_part1.py
 ```
 
-Raw evidence is in [metrics.json](../results/part1/metrics.json), [losses.csv](../results/part1/losses.csv), [regression_predictions.csv](../results/part1/regression_predictions.csv), and [run.log](../results/part1/run.log). Optional test confusion matrices and numerical checks are also retained under `results/part1/`.
+Raw evidence is in [metrics.json](results/part1/metrics.json), [losses.csv](results/part1/losses.csv), [regression_predictions.csv](results/part1/regression_predictions.csv), and [run.log](results/part1/run.log). Optional test confusion matrices and numerical checks are also retained under `results/part1/`.
 
 ## 6. Responses to the Lab's Explanatory Points
 
@@ -149,7 +148,7 @@ Two corrections are necessary: valid convolution and pooling produce `64 -> 62 -
 
 ### 8.2 PDF Task: Automatically Train and Test Large Blocks of Unseen Images
 
-[src/part2.py](../src/part2.py) automatically trains on all 18,708 training images, then tests all 4,678 held-out images once, in nine blocks of 512 and one final block of 70. Each block runs image loading, preprocessing, convolution, pooling, and FC prediction. The fixed training features are computed once and reused across epochs; this preserves the FC-only updates. The convolution filter is verified to remain unchanged.
+[src/part2.py](src/part2.py) automatically trains on all 18,708 training images, then tests all 4,678 held-out images once, in nine blocks of 512 and one final block of 70. Each block runs image loading, preprocessing, convolution, pooling, and FC prediction. The fixed training features are computed once and reused across epochs; this preserves the FC-only updates. The convolution filter is verified to remain unchanged.
 
 ### 8.3 PDF Task: Measure Image Processing Time
 
@@ -198,11 +197,11 @@ The online MSE averages losses before individual SGD updates; the full training 
 | 9 | 512 | 57.8125% | 4.4904 |
 | 10 | 70 | 61.4286% | 0.6598 |
 
-![Part II training loss and unseen-image block accuracy](../results/part2/training_and_evaluation.png)
+![Part II training loss and unseen-image block accuracy](results/part2/training_and_evaluation.png)
 
 Training MSE decreases, and test accuracy is about 8.85 percentage points above the majority-class baseline. Accuracy remains modest: only the FC layer learns, while the single random convolution filter cannot learn task-specific cat/dog features. Output ReLU can also produce zero gradients for inactive outputs, although none of the final test outputs was zero. The training/test accuracy gap is about 1.49 percentage points. Results use the epoch-10 model without test-based checkpoint selection.
 
-The three Part II evaluation tasks are complete. Raw evidence is in [metrics.json](../results/part2/metrics.json), [losses.csv](../results/part2/losses.csv), [test_blocks.csv](../results/part2/test_blocks.csv), and [test_predictions.csv](../results/part2/test_predictions.csv). Reproduce preparation and training from the project root:
+The three Part II evaluation tasks are complete. Raw evidence is in [metrics.json](results/part2/metrics.json), [losses.csv](results/part2/losses.csv), [test_blocks.csv](results/part2/test_blocks.csv), and [test_predictions.csv](results/part2/test_predictions.csv). Reproduce preparation and training from the project root:
 
 ```powershell
 python scripts/prepare_part2_data.py

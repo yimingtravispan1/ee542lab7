@@ -1,8 +1,8 @@
 # Lab 7 - NumPy Neural Networks
 
-Parts I and II of the PDF are complete. The main [docs/report.md](docs/report.md) contains the Part I analysis and concise responses to all three Part II evaluation tasks in Section 8.
+Parts I and II of the PDF are complete. The main [report.md](report.md) contains the Part I analysis and concise responses to all three Part II evaluation tasks in Section 8.
 
-Part II implements the cat/dog NumPy CNN, training only the fully connected layer, with timed evaluation on held-out image blocks. [docs/part2-report.md](docs/part2-report.md) provides supplementary implementation and reproducibility details.
+Part II implements the cat/dog NumPy CNN, training only the fully connected layer, with timed evaluation on held-out image blocks.
 
 ```text
 ee542lab7/
@@ -12,12 +12,8 @@ ee542lab7/
 |   |-- part1.py                 # Part I implementation and three experiments
 |   `-- part2.py                 # Part II CNN, training, timed block evaluation
 |-- scripts/
-|   |-- prepare_part2_data.py    # Parquet download, extraction, held-out split
-|   |-- verify_part1.py          # Optional gradient and Softmax checks
-|   `-- verify_part2.py          # Optional CNN operation and gradient checks
-|-- docs/
-|   |-- report.md               # Main report: Parts I and II
-|   `-- part2-report.md         # Supplementary Part II details
+|   `-- prepare_part2_data.py    # Parquet download, extraction, held-out split
+|-- report.md                   # Main report: Parts I and II
 |-- results/
 |   |-- part1/                  # Part I recorded outputs
 |   `-- part2/                  # Part II model, predictions, timing, and figures
@@ -37,16 +33,14 @@ Run these commands from the project root:
 ```powershell
 python -m pip install --target .packages -r requirements.txt
 python src/part1.py
-python scripts/verify_part1.py
 ```
 
-Dependencies are already installed in this project's `.packages/` directory, so the last two commands can be run directly. The scripts resolve paths from their own locations; results are saved under `results/` at the project root.
+Dependencies are already installed in this project's `.packages/` directory, so the training command can be run directly. The scripts resolve paths from their own locations; results are saved under `results/` at the project root.
 
 Run Part II from the project root:
 
 ```powershell
 python scripts/prepare_part2_data.py
-python scripts/verify_part2.py
 python src/part2.py
 ```
 
@@ -61,7 +55,6 @@ python src/part2.py --block-size 1024
 Rerunning training updates Part II outputs. Recorded report timings describe the saved run and can vary on another run or machine.
 
 - [src/part1.py](src/part1.py): MLP, SGD, regression, binary and multiclass classification, and result and figure export.
-- [scripts/verify_part1.py](scripts/verify_part1.py): Optional finite-difference checks of backpropagation gradients and a Softmax stability check; not required by the PDF.
 - `results/part1/`: Recorded experiment results and figures.
 
 Network calculations and training use only NumPy. Pillow handles images, PyArrow reads Parquet, and Matplotlib creates figures. Part III has not been implemented.
