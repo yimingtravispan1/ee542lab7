@@ -1,0 +1,69 @@
+{
+  "python": "3.13.15",
+  "numpy": "2.5.4",
+  "regression": {
+    "initial_loss": 1.0769989401362963,
+    "final_loss": 0.0017746898211408923,
+    "training_seconds": 0.18016620000707917,
+    "samples": 400,
+    "epochs": 500,
+    "lr": 0.01,
+    "batch_size": 64,
+    "weight_decay": 0.0001,
+    "train_mse": 0.0035493796422817847,
+    "clean_grid_mse": 0.0009916609318758615
+  },
+  "binary": {
+    "initial_loss": 0.9582857543828416,
+    "final_loss": 0.28161459342246326,
+    "training_seconds": 0.21558630000799894,
+    "samples": 800,
+    "epochs": 200,
+    "lr": 0.005,
+    "batch_size": 64,
+    "weight_decay": 0.0001,
+    "train_accuracy": 0.99875,
+    "independent_test_samples": 2000,
+    "independent_test_accuracy": 0.999,
+    "test_confusion_matrix_rows_true_cols_predicted": [
+      [
+        998,
+        2
+      ],
+      [
+        0,
+        1000
+      ]
+    ]
+  },
+  "multiclass": {
+    "initial_loss": 1.7780956337402596,
+    "final_loss": 0.14400983230297043,
+    "training_seconds": 0.24012459999357816,
+    "samples": 900,
+    "epochs": 200,
+    "lr": 0.005,
+    "batch_size": 64,
+    "weight_decay": 0.0,
+    "train_accuracy": 0.9511111111111111,
+    "independent_test_samples": 3000,
+    "independent_test_accuracy": 0.9523333333333334,
+    "test_confusion_matrix_rows_true_cols_predicted": [
+      [
+        902,
+        50,
+        48
+      ],
+      [
+        29,
+        971,
+        0
+      ],
+      [
+        16,
+        0,
+        984
+      ]
+    ]
+  }
+}
