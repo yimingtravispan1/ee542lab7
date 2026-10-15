@@ -2,3 +2,4 @@
 .codex-tools/
 __pycache__/
 .mplconfig/
+data/

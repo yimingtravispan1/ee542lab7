@@ -1,2 +1,4 @@
 numpy>=1.24
 matplotlib>=3.7
+Pillow>=10.0
+pyarrow>=18.0
