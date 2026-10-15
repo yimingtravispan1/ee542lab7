@@ -1,0 +1,5 @@
+{
+  "regression_gradient_max_absolute_error": 2.2716637460007405e-09,
+  "classification_gradient_max_absolute_error": 9.451764718115818e-11,
+  "stable_softmax": "passed"
+}
