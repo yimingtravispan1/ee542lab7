@@ -1,12 +1,12 @@
-# Laboratory 7 - Part I: Basics
+# Laboratory 7 Report - Parts I and II
 
-This report covers Part I on pages 1-10 of `lab7.pdf`: a NumPy MLP, SGD, backpropagation, and three application examples. All numerical results come from actual local execution. Parts II and III have not been started.
+This report covers Parts I and II of `lab7.pdf`. Sections 1-7 cover Part I (pages 1-10); Section 8 answers the Part II evaluation tasks (pages 10-12). All numerical results come from actual local execution. Additional Part II implementation details are available in [part2-report.md](part2-report.md). Part III has not been started.
 
-Part I contains implementation instructions, step-by-step explanations, and three application examples, rather than a separate numbered question list. Sections 1-4 explain the methods and results; Section 6 explicitly addresses the explanatory points in the lab so that the report answers them as well as presenting working code.
+Part I has no separate numbered question list. Sections 1-4 answer its explanatory points and discuss all three examples; Section 6 maps these responses to the PDF.
 
 ## 1. Objectives and Model
 
-A perceptron computes a weighted sum of its inputs, adds a bias, and applies an activation function. An MLP connects these operations in layers. Nonlinear hidden activations allow the network to approximate piecewise-linear functions and nonlinear classification boundaries.
+A perceptron applies an activation to a weighted input sum plus bias. An MLP connects these units in fully connected, feedforward layers. ReLU introduces nonlinearity; without it, stacked affine layers would remain a single affine mapping. More layers or neurons increase representational capacity and training cost.
 
 The implementation is in [src/part1.py](../src/part1.py). Following the PDF example code, the model has one hidden layer and two fully connected layers with trainable parameters:
 
@@ -19,15 +19,17 @@ Classification: return softmax(Z2)
 The conceptual example on page 2 is `2 -> 4 -> 4 -> 2`, whereas the subsequent `MLP2` code and all three experiments have one hidden layer. This implementation follows the concrete code. "Two-layer" counts the two parameterized layers and excludes the input layer.
 
 - `ReLU(z) = max(0, z)`. Its derivative is 1 for `z > 0` and 0 otherwise; the derivative at zero is taken as 0.
-- Weights use He initialization as in the PDF; biases start at zero.
+- Weights use He initialization with variance `2 / fan_in` to help preserve signal scale through ReLU; biases start at zero.
 - Softmax subtracts each row's maximum before exponentiation to avoid overflow, then normalizes the outputs into probabilities.
-- One-hot encoding represents each class label as a vector with 1 at the corresponding class index.
+- One-hot encoding represents each class label as a vector with 1 at the corresponding class index. Classification selects the largest Softmax probability using `argmax`.
 - The regression loss follows the PDF: `L = (1 / (2*N)) * sum_i sum_j (Z2[i,j] - y[i,j])**2`. With one output, this is half the ordinary MSE.
 - The classification loss is mean cross-entropy: `L = -(1/N) * sum_i log(p[i,y[i]] + 1e-12)`.
 
+Regression returns continuous raw outputs and penalizes squared error. Classification returns class probabilities; cross-entropy penalizes low probability assigned to the true class.
+
 ## 2. Backpropagation and Training
 
-The regression output gradient is `dZ2 = (Z2 - y) / N`. For Softmax combined with cross-entropy, it is `dZ2 = (p - one_hot(y)) / N`; the code adds `1e-12` inside the logarithm as a numerical safeguard. As in the PDF, the backward pass uses the standard Softmax/cross-entropy gradient, without differentiating that small safeguard. The remaining gradients are:
+Backpropagation applies the chain rule from the output through the second linear layer, ReLU, and the first linear layer. The output gradient is `dZ2 = (Z2 - y) / N` for regression and `dZ2 = (p - one_hot(y)) / N` for Softmax/cross-entropy. As in the PDF, the latter uses the standard gradient, ignoring the small `1e-12` logarithm safeguard. The remaining gradients are:
 
 ```text
 dW2 = H1.T @ dZ2               db2 = sum(dZ2, axis=0, keepdims=True)
@@ -38,7 +40,7 @@ dW1 = X.T @ dZ1                db1 = sum(dZ1, axis=0, keepdims=True)
 
 Here `@` denotes matrix multiplication, `.T` denotes transpose, and `*` denotes elementwise multiplication. Intermediate values `X`, `Z1`, and `H1` are cached during the forward pass because the backward pass needs them to apply the chain rule.
 
-Each epoch shuffles the samples using `seed=epoch`, then performs a forward pass, backpropagation, and an SGD update for each mini-batch. Weight decay applies only to weights: `W = W - lr * (dW + weight_decay * W)`. Biases are updated as `b = b - lr * db`. The full training-set data loss is recorded after every epoch and excludes the L2 regularization term.
+Each epoch shuffles samples using `seed=epoch`, then performs forward propagation, backpropagation, and SGD updates for each mini-batch. Mini-batches reduce per-update memory requirements and introduce gradient noise that can help optimization. The learning rate controls step size; loss need not decrease at every update. Weight decay discourages large weights using `W = W - lr * (dW + weight_decay * W)`; biases use `b = b - lr * db`. Full training-set data loss is measured after each epoch, excluding the regularization term.
 
 ## 3. Experimental Setup
 
@@ -54,13 +56,13 @@ These parameters, training data seeds, and model seeds match the PDF. An additio
 
 ## 4. Recorded Results
 
-| Experiment | Initial loss | Final loss | Training accuracy | Independent test accuracy | Training time (seconds) |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| 1D regression | 1.076999 | 0.001775 | N/A | N/A | 0.1802 |
-| Binary classification | 0.958286 | 0.281615 | 99.875% | 99.900% | 0.2156 |
-| Multiclass classification | 1.778096 | 0.144010 | 95.111% | 95.233% | 0.2401 |
+| Experiment | Initial loss | Final loss | Training accuracy |
+| --- | ---: | ---: | ---: |
+| 1D regression | 1.076999 | 0.001775 | N/A |
+| Binary classification | 0.958286 | 0.281615 | 99.875% |
+| Multiclass classification | 1.778096 | 0.144010 | 95.111% |
 
-Timing uses `perf_counter()` and includes only `train()`, excluding plotting, testing, and dependency loading. Times vary with machine load. The recorded environment is Python 3.13.15 and NumPy 2.5.4; this part runs on the CPU using NumPy.
+The recorded environment is Python 3.13.15 and NumPy 2.5.4 on CPU. As optional evaluation beyond Part I, independent ring and blob test accuracies are 99.900% and 95.233%, respectively. Detailed metrics and timings remain in [metrics.json](../results/part1/metrics.json).
 
 ![Loss curves for all three experiments](../results/part1/loss_curves.png)
 
@@ -82,16 +84,11 @@ The ordinary training MSE is **0.00354938**. The MSE against the noiseless targe
 
 ![Regression fit](../results/part1/regression.png)
 
-Weighted combinations of hidden ReLU units form a piecewise-linear fit. The model learns the overall trend, but deviations remain near the target's breakpoints at `x=-0.4` and `x=0.5`, particularly an underestimate at `x=0`. The loss improves slowly late in training, indicating that the PDF's fixed training settings do not fully capture the breakpoints. These observed results are retained.
+Each ReLU unit is active over part of the x-axis, and their weighted sum forms a piecewise-linear fit. Backpropagation and SGD reduce squared error on noisy samples. The model learns the overall trend but does not fully capture the breakpoints at `x=-0.4` and `x=0.5`; at `x=0` it predicts 0.259591 instead of 0.35.
 
 ### 4.2 Concentric-Ring Binary Classification
 
-The model classifies **799/800** training samples and **1998/2000** independent test samples correctly. The test confusion matrix uses rows for true classes and columns for predicted classes; class 0 is the inner ring and class 1 is the outer ring.
-
-| True class / Predicted class | 0 | 1 |
-| --- | ---: | ---: |
-| 0 | 998 | 2 |
-| 1 | 0 | 1000 |
+The model correctly classifies **799/800** training samples (99.875%); class 0 is the inner ring and class 1 is the outer ring.
 
 ![Concentric-ring classification boundary](../results/part1/binary_boundary.png)
 
@@ -99,37 +96,17 @@ A single straight line cannot separate the concentric rings. Multiple ReLU activ
 
 ### 4.3 Three-Blob Multiclass Classification
 
-The model classifies **856/900** training samples and **2857/3000** independent test samples correctly.
-
-| True class / Predicted class | 0 | 1 | 2 |
-| --- | ---: | ---: | ---: |
-| 0 | 902 | 50 | 48 |
-| 1 | 29 | 971 | 0 |
-| 2 | 16 | 0 | 984 |
+The model correctly classifies **856/900** training samples (95.111%).
 
 ![Three-blob classification boundary](../results/part1/multiclass_boundary.png)
 
-ReLU units form multiple linear regions, and the three Softmax outputs provide class probabilities. Most errors occur between the central blob and the two outer blobs. The Gaussian distributions overlap, so perfect separation of every sample is not expected. Training and independent test accuracy are close, with no substantial generalization gap observed on this test distribution.
+ReLU units form multiple linear regions to separate the clusters. Three Softmax outputs provide class probabilities, and `argmax` selects the predicted class. Most independent-test errors involve the central blob and an outer blob; overlapping Gaussian distributions make perfect separation unlikely.
 
 ## 5. Verification and Reproduction
 
-[scripts/verify_part1.py](../scripts/verify_part1.py) is an optional verification tool beyond the PDF requirements. It uses central finite differences to check every entry of `W1`, `b1`, `W2`, and `b2` in a small network for both regression and classification. It also verifies that large-magnitude logits produce finite, normalized Softmax probabilities.
+[scripts/verify_part1.py](../scripts/verify_part1.py) provides optional numerical checks. Regression and classification gradients pass finite-difference checks (maximum absolute errors `2.27e-9` and `9.45e-11`), and Softmax remains finite and normalized for large logits. All three experiments have finite losses below their initial values.
 
-| Check | Result |
-| --- | --- |
-| Maximum absolute regression gradient error | 2.27e-9; passed |
-| Maximum absolute classification gradient error | 9.45e-11; passed |
-| Softmax numerical stability | Passed |
-| Finite losses and a decrease from the initial loss in all experiments | Passed |
-
-Run directly from the project directory:
-
-```powershell
-python src/part1.py
-python scripts/verify_part1.py
-```
-
-For another environment, install dependencies first. A project-local dependency directory can be used:
+Run from the project root; dependency installation is needed only for a fresh environment:
 
 ```powershell
 python -m pip install --target .packages -r requirements.txt
@@ -137,36 +114,97 @@ python src/part1.py
 python scripts/verify_part1.py
 ```
 
-Raw results are stored in `results/part1/`: `metrics.json` (metrics and training parameters), `losses.csv` (per-epoch losses), `regression_predictions.csv`, two test confusion matrix CSV files, `run.log` (complete execution output), `verification.json`, and four PNG figures. Rerunning the scripts updates these artifacts.
+Raw evidence is in [metrics.json](../results/part1/metrics.json), [losses.csv](../results/part1/losses.csv), [regression_predictions.csv](../results/part1/regression_predictions.csv), and [run.log](../results/part1/run.log). Optional test confusion matrices and numerical checks are also retained under `results/part1/`.
 
 ## 6. Responses to the Lab's Explanatory Points
 
-The prompts below organize the concepts discussed in Part I; they are not additional questions quoted from the PDF.
+The PDF's explanatory points are answered in the sections below, without repeating the same discussion as a separate question list.
 
-### 6.1 ANN and ReLU Basics (PDF pages 1-2)
+| PDF topic | Response in this report |
+| --- | --- |
+| ANN, MLP, and the role of ReLU (pages 1-2) | Section 1: weighted sums, nonlinearity, architecture, initialization |
+| Forward pass, losses, backpropagation, SGD (pages 2-9) | Sections 1-2: outputs, loss functions, gradients, mini-batches, updates |
+| Example 1: piecewise-linear regression (page 9) | Section 4.1: nine predictions, ReLU fit, error and limitations |
+| Example 2: nonlinear binary classification (pages 9-10) | Section 4.2: accuracy and how a nonlinear boundary separates rings |
+| Example 3: three-class classification (page 10) | Section 4.3: accuracy, Softmax/argmax, cluster separation and errors |
 
-**How does an MLP represent nonlinear relationships?** A single perceptron has a linear decision boundary. ReLU changes which hidden units are active for different inputs, so the MLP combines different linear mappings in different regions. Without nonlinear activations, stacking affine layers would still produce one affine mapping. More hidden units or layers can represent more complex relationships, but also increase computation and can make optimization harder. This MLP is feedforward and fully connected: each layer receives the previous layer's outputs, with no recurrence or convolution.
+## 7. Part I Completion Status
 
-### 6.2 MLP Implementation and Training (PDF pages 2-9)
+Part I's NumPy MLP and all three application examples are implemented, executed, and explained above. Cat/dog image processing belongs to Part II; GPU comparison belongs to Part III.
 
-**Why do regression and classification use different outputs and losses?** Regression predicts continuous values, so it returns the raw output and minimizes squared error. Classification predicts a discrete label, so Softmax converts logits to class probabilities and cross-entropy penalizes low probability assigned to the true class. The predicted class is the index of the largest probability. Subtracting the maximum logit leaves Softmax probabilities unchanged while avoiding overflow.
+## 8. Part II: NumPy Cat/Dog CNN
 
-**How does the model learn?** Each mini-batch follows the sequence forward pass, loss interpretation, backward pass, and SGD update. The implementation computes the gradients directly after the forward pass; evaluating the scalar loss separately is not needed for that update. Backpropagation applies the chain rule from the output through the second linear layer, the ReLU mask, and the first linear layer. SGD subtracts the learning rate times each gradient. The loss is then measured on the entire training set after each epoch to track progress. A sufficiently small step can reduce loss locally; mini-batch updates do not guarantee that loss decreases on every step.
+### 8.1 Dataset, Model, and Necessary Corrections
 
-**Why use He initialization, mini-batches, and weight decay?** He initialization uses weight variance `2 / fan_in` to help preserve signal scale through ReLU layers. Shuffled mini-batches reduce the amount of data processed per update and introduce gradient noise that can help optimization, without guaranteeing escape from every local minimum. The learning rate controls update size. Weight decay adds `weight_decay * W` to weight gradients, discouraging large weights; biases are not regularized in the PDF implementation.
+The PDF's [microsoft/cats_vs_dogs dataset](https://huggingface.co/datasets/microsoft/cats_vs_dogs/tree/b5ae3589204019bc2cc97e99e4914a54589333ef) contains 23,410 Parquet rows. After removing 24 byte-identical duplicates, a seeded, stratified 80/20 split produces:
 
-### 6.3 Application Example 1: Piecewise-Linear Regression (PDF page 9)
+| Split | Cat (0) | Dog (1) | Total |
+| --- | ---: | ---: | ---: |
+| Training | 9,380 | 9,328 | 18,708 |
+| Unseen test | 2,346 | 2,332 | 4,678 |
 
-**What do the ReLU units learn, and how well does the fit work?** Each hidden unit contributes a linear segment when active and zero when inactive. Their weighted sum approximates the target's piecewise-linear shape. Backpropagation adjusts the weights and biases to reduce squared error on noisy observations. With the specified 400 samples and 500 epochs, loss decreases from 1.076999 to 0.001775. The nine requested predictions appear in Section 4.1. The fit follows the overall function but underestimates the target at `x=0`; successful execution does not imply an exact fit.
+Images are organized under `data/train/{cat,dog}/` and `data/test/{cat,dog}/`, converted to RGB, resized to 64x64, and normalized to `[0,1]`. The model uses one fixed random 3x3x3 convolution filter, ReLU, 2x2 max pooling, and a scalar FC output with ReLU. Only FC weights and bias are trained, using MSE, online SGD, learning rate 0.001, and 10 epochs. The class is dog when the output exceeds 0.5, otherwise cat. Split seed is 42; model and training-order seed is 0.
 
-### 6.4 Application Example 2: Nonlinear Binary Classification (PDF pages 9-10)
+Two corrections are necessary: valid convolution and pooling produce `64 -> 62 -> 31`, so the FC input is `31*31 = 961`, rather than the PDF's `32*32*3`. Also, splitting the PDF's class-ordered loader directly would leave only dogs in the test set; stratification ensures both classes appear in each split. Exact-byte duplicates are removed before splitting, and no test images are used for training or model selection.
 
-**Why can the network separate concentric rings?** A straight line cannot separate an inner ring from an outer ring. Hidden ReLU units divide the plane into regions whose combined decision boundary approximates a closed shape. This is a piecewise-linear approximation to a circular boundary. The two Softmax outputs provide class probabilities; cross-entropy trains the network to favor the correct class. Gradients flow through the Softmax/cross-entropy output, the second linear layer, ReLU, and the first linear layer. Training accuracy is 799/800, or 99.875%.
+### 8.2 PDF Task: Automatically Train and Test Large Blocks of Unseen Images
 
-### 6.5 Application Example 3: Three-Class Classification (PDF page 10)
+[src/part2.py](../src/part2.py) automatically trains on all 18,708 training images, then tests all 4,678 held-out images once, in nine blocks of 512 and one final block of 70. Each block runs image loading, preprocessing, convolution, pooling, and FC prediction. The fixed training features are computed once and reused across epochs; this preserves the FC-only updates. The convolution filter is verified to remain unchanged.
 
-**How does the network distinguish three blobs?** The output layer has three logits, one for each class, and Softmax normalizes them to probabilities. Taking `argmax` assigns each input to one of the three classes. ReLU activation regions allow multiple linear pieces to separate the clusters. Training accuracy is 856/900, or 95.111%; Section 4.3 discusses errors where the sampled distributions overlap.
+### 8.3 PDF Task: Measure Image Processing Time
 
-## 7. Completion Status
+Wall-clock times are measured with `perf_counter()` on CPU (Windows 11, Python 3.13.15, NumPy 2.5.4):
 
-Part I is complete, including the implementation, all three example runs, recorded results, and explanations. There are no remaining blockers. Missing dependencies were resolved by installing them in the project's `.packages/` directory. Part I requires neither an image dataset nor a GPU. The cat/dog image experiments and GPU comparison belong to Parts II and III.
+| Measurement | Result |
+| --- | ---: |
+| Training image loading, resizing, convolution, pooling | 166.4118 s |
+| FC training and epoch metrics, all 10 epochs | 3.0306 s |
+| Total training processing | 169.4424 s |
+| Processing all 4,678 test images | 39.4744 s |
+| Test throughput | 118.5072 images/s |
+| Average test time per image | 8.4383 ms |
+
+Test timings include reading, RGB conversion, resizing, normalization, convolution, pooling, FC inference, and thresholding. They exclude downloading and result-file/plot export. Training time includes the one-time feature extraction disclosed above. Timings depend on machine load and filesystem caching.
+
+### 8.4 PDF Task: Report the Relevant Results
+
+| Metric | Result |
+| --- | ---: |
+| Initial full training MSE | 0.497860 |
+| Final online training MSE (epoch 10) | 0.245325 |
+| Final full training MSE | 0.244767 |
+| Training accuracy | 60.4875% |
+| Test MSE | 0.245212 |
+| Test accuracy | 58.9996% (2,760 / 4,678) |
+| Test majority-class baseline | 50.1496% |
+
+The online MSE averages losses before individual SGD updates; the full training MSE evaluates the final epoch model on the entire training set. Test confusion matrix (rows = true class, columns = predicted class):
+
+| True / Predicted | Cat (0) | Dog (1) |
+| --- | ---: | ---: |
+| Cat (0) | 1,315 | 1,031 |
+| Dog (1) | 887 | 1,445 |
+
+| Test block | Images | Accuracy | Processing time (s) |
+| --- | ---: | ---: | ---: |
+| 1 | 512 | 58.0078% | 4.3097 |
+| 2 | 512 | 59.3750% | 4.2407 |
+| 3 | 512 | 60.1562% | 4.5574 |
+| 4 | 512 | 58.0078% | 4.2756 |
+| 5 | 512 | 60.7422% | 4.1946 |
+| 6 | 512 | 59.5703% | 4.3030 |
+| 7 | 512 | 57.4219% | 4.2533 |
+| 8 | 512 | 59.5703% | 4.1899 |
+| 9 | 512 | 57.8125% | 4.4904 |
+| 10 | 70 | 61.4286% | 0.6598 |
+
+![Part II training loss and unseen-image block accuracy](../results/part2/training_and_evaluation.png)
+
+Training MSE decreases, and test accuracy is about 8.85 percentage points above the majority-class baseline. Accuracy remains modest: only the FC layer learns, while the single random convolution filter cannot learn task-specific cat/dog features. Output ReLU can also produce zero gradients for inactive outputs, although none of the final test outputs was zero. The training/test accuracy gap is about 1.49 percentage points. Results use the epoch-10 model without test-based checkpoint selection.
+
+The three Part II evaluation tasks are complete. Raw evidence is in [metrics.json](../results/part2/metrics.json), [losses.csv](../results/part2/losses.csv), [test_blocks.csv](../results/part2/test_blocks.csv), and [test_predictions.csv](../results/part2/test_predictions.csv). Reproduce preparation and training from the project root:
+
+```powershell
+python scripts/prepare_part2_data.py
+python src/part2.py
+```
