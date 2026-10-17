@@ -207,3 +207,189 @@ The three Part II evaluation tasks are complete. Raw evidence is in [metrics.jso
 python scripts/prepare_part2_data.py
 python src/part2.py
 ```
+## 9. Part III: GPU Acceleration with PyTorch
+
+### 9.1 Objective and Experimental Setup
+
+Part III implements a PyTorch CNN for cat/dog classification and compares its recorded performance with the NumPy implementation from Part II.
+
+The implementation is in [src/part3.py](src/part3.py). It reuses the same prepared dataset and train/test split described in Section 8.1: 18,708 training images and 4,678 unseen test images. Labels are cat = 0 and dog = 1.
+
+`ImageFolder` loads the images, while the transformation pipeline resizes them to 64×64 using bicubic interpolation and converts them to float32 tensors with values in [0,1]. The training DataLoader shuffles samples each epoch; the test DataLoader does not shuffle.
+
+| Setting | Configuration |
+| --- | --- |
+| GPU | NVIDIA GeForce RTX 5070 |
+| Python | 3.10.10 |
+| PyTorch | 2.7.1+cu128 |
+| Device | CUDA |
+| Model seed | 42 |
+| Epochs | 10 |
+| Training batch size | 64 |
+| Test block size | 512 |
+| DataLoader workers | 0 |
+| Loss function | Mean squared error |
+| Optimizer | Adam |
+| Learning rate | 0.001 |
+| Classification threshold | Output > 0.5 predicts dog; otherwise cat |
+
+The model and each batch of images and labels are moved to the same device using `.to(device)`. Labels are converted to floating-point tensors with shape `[B, 1]` to match the model output.
+
+### 9.2 CNN Architecture and Training
+
+The model follows the detailed Part III instructions: two convolutional layers with ReLU and max pooling, followed by two fully connected layers with ReLU.
+
+| Layer | Output shape |
+| --- | --- |
+| Input | B × 3 × 64 × 64 |
+| Conv2d(3, 16, kernel=3, padding=1), ReLU | B × 16 × 64 × 64 |
+| Max pooling, size 2 | B × 16 × 32 × 32 |
+| Conv2d(16, 32, kernel=3, padding=1), ReLU | B × 32 × 32 × 32 |
+| Max pooling, size 2 | B × 32 × 16 × 16 |
+| Flatten | B × 8192 |
+| Linear(8192, 64), ReLU | B × 64 |
+| Linear(64, 1), ReLU | B × 1 |
+
+Here, B is the actual batch size. The network has 529,505 trainable parameters, including biases. Unlike Part II, both convolutional and fully connected parameters are updated during training.
+
+The final layer uses small normally distributed weights with standard deviation 0.001 and an initial bias of 0.5. This starts outputs near the classification threshold and reduces the risk of initially inactive output ReLUs. The output is a nonnegative classification score, not a probability, because ReLU does not constrain it to be at most 1.
+
+Each training batch performs the following operations:
+
+1. Clear gradients with `optimizer.zero_grad()`.
+2. Compute predictions with `model(images)`.
+3. Calculate MSE against the labels.
+4. Compute gradients with `loss.backward()`.
+5. Update parameters with `optimizer.step()`.
+
+There are 293 batches per epoch and 2,930 parameter updates over 10 epochs. The final epoch-10 model is evaluated without test-based checkpoint selection.
+
+Although the handout introduces Part III as the same classification system, its detailed instructions specify two convolutional layers, whereas Part II uses one fixed filter. Therefore, the implementations solve the same task but do not have identical architectures.
+
+### 9.3 Training Results
+
+Recorded training results are available in [losses.csv](results/part3/losses.csv).
+
+| Epoch | Online training MSE | Training accuracy during updates | Time (s) |
+| --- | ---: | ---: | ---: |
+| 1 | 0.226647 | 62.13% | 102.67 |
+| 2 | 0.195204 | 70.44% | 22.94 |
+| 3 | 0.178759 | 73.09% | 23.07 |
+| 4 | 0.161878 | 76.37% | 23.05 |
+| 5 | 0.150008 | 78.44% | 22.68 |
+| 6 | 0.139729 | 80.40% | 22.88 |
+| 7 | 0.132218 | 81.36% | 23.01 |
+| 8 | 0.124462 | 82.60% | 22.96 |
+| 9 | 0.118859 | 83.71% | 22.96 |
+| 10 | 0.113020 | 84.74% | 22.72 |
+
+Training MSE decreased from 0.226647 to 0.113020, and training accuracy increased from 62.13% to 84.74%, indicating that the model learned useful classification features.
+
+These training metrics are collected before each batch update while the model changes throughout the epoch. They are not a separate evaluation of the final model on the entire training set.
+
+Total training time was 308.94 seconds. The first epoch took 102.67 seconds, while later epochs took approximately 23 seconds each. Initialization and filesystem caching may contribute to this difference, but their individual effects were not measured. The first epoch remains included in the total training time.
+
+### 9.4 GPU Evaluation and Timing Method
+
+After training, the code calls `model.eval()` and evaluates under `torch.no_grad()`. Evaluation does not update model parameters.
+
+Before timing, three inference passes use a zero tensor of shape `[512, 3, 64, 64]` on the GPU. These warm-up passes are excluded from the reported test time.
+
+Elapsed time is measured using `time.perf_counter()`. CUDA synchronization is performed at timing boundaries so pending GPU operations finish before elapsed times are recorded.
+
+Test timing includes:
+
+- Image loading and RGB conversion.
+- Resizing and tensor conversion.
+- CPU-to-GPU transfer.
+- CNN inference.
+- Classification and metric calculation.
+
+It excludes dataset downloading, warm-up, and result-file export. Therefore, the reported throughput measures end-to-end image processing rather than GPU computation alone.
+
+Training timing includes image loading and preprocessing during each epoch, data transfer, forward and backward computation, parameter updates, and metric/logging overhead. Training does not use a separate warm-up phase.
+
+All 4,678 unseen images are evaluated in nine blocks of 512 images and a final block of 70.
+
+| Test block | Images | Accuracy | Processing time (s) |
+| --- | ---: | ---: | ---: |
+| 1 | 512 | 81.05% | 2.3961 |
+| 2 | 512 | 81.05% | 2.2572 |
+| 3 | 512 | 79.30% | 2.3061 |
+| 4 | 512 | 80.47% | 2.2071 |
+| 5 | 512 | 82.62% | 2.2164 |
+| 6 | 512 | 83.40% | 2.4077 |
+| 7 | 512 | 80.08% | 2.2923 |
+| 8 | 512 | 78.71% | 2.2433 |
+| 9 | 512 | 80.27% | 2.2843 |
+| 10 | 70 | 88.57% | 0.3084 |
+
+Source: [test_blocks.csv](results/part3/test_blocks.csv).
+
+Overall accuracy is calculated from the total number of correct predictions, rather than averaging block accuracies without weighting. The model correctly classified 3,784 out of 4,678 images.
+
+Because `ImageFolder` groups images by class and the test loader does not shuffle, individual blocks are not necessarily class-balanced. Block accuracy differences should not be interpreted as changes in model quality over time. Block identities and ordering may also differ from Part II.
+
+### 9.5 Comparison with the NumPy Implementation
+
+| Metric | Part II: NumPy / CPU | Part III: PyTorch / GPU |
+| --- | ---: | ---: |
+| Test images | 4,678 | 4,678 |
+| Test accuracy | 59.00% | 80.89% |
+| Test MSE | 0.245212 | 0.139953 |
+| Total training time | 169.44 s | 308.94 s |
+| End-to-end test time | 39.47 s | 20.92 s |
+| Test throughput | 118.51 images/s | 223.62 images/s |
+
+Sources: [Part II metrics](results/part2/metrics.json) and [Part III metrics](results/part3/metrics.json).
+
+![NumPy and PyTorch comparison](results/part3/comparison.png)
+
+Test accuracy improved by 21.89 percentage points. End-to-end test time decreased by approximately 47%, and throughput was approximately 1.89 times the recorded NumPy throughput.
+
+The improvement in accuracy is consistent with learning task-specific convolutional features. Part II trains only the fully connected layer on features extracted by one fixed random convolution filter, while Part III trains the entire CNN.
+
+However, these results do not isolate the effect of GPU acceleration:
+
+- Network architectures and trainable parameter counts differ.
+- Part II uses online SGD and float64; Part III uses mini-batch Adam and float32.
+- Part II computes fixed training features once and reuses them across epochs.
+- Part III processes images and updates the full network during every epoch.
+- The recorded experiments run on different computers.
+- Timings come from individual recorded runs without repeated-run uncertainty estimates.
+
+These differences explain why Part III can have higher accuracy and faster testing while taking longer to train. The training-time comparison does not establish that GPU training is slower for an equivalent workload.
+
+A controlled GPU acceleration experiment would evaluate the same PyTorch model and weights on CPU and GPU on the same computer, using matched batch sizes, preprocessing, timing scope, and repeated measurements. This additional experiment was not performed.
+
+### 9.6 Reproduction and Deliverables
+
+Run the following commands from the project root in the configured environment:
+
+powershell
+.\.venv\Scripts\python.exe scripts/prepare_part2_data.py
+.\.venv\Scripts\python.exe src/part3.py
+.\.venv\Scripts\python.exe src/plot_comparison.py
+The recorded run uses PyTorch 2.7.1+cu128 and torchvision 0.22.1. For a fresh environment, install the repository dependencies and the GPU packages:
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m pip install torch==2.7.1 torchvision==0.22.1 --index-url https://download.pytorch.org/whl/cu128
+
+The script uses CUDA when available and otherwise falls back to CPU. Model seeds are fixed, but strict deterministic execution is not enabled. Timing and numerical results may vary across environments.
+File	Purpose
+[part3.py](src/part3.py)	CNN training, GPU evaluation, and result export
+[plot_comparison.py](src/plot_comparison.py)	Generate comparison charts
+[metrics.json](results/part3/metrics.json)	Configuration and aggregate results
+[losses.csv](results/part3/losses.csv)	Per-epoch training statistics
+[test_blocks.csv](results/part3/test_blocks.csv)	Per-block test statistics
+[model.pt](results/part3/model.pt)	Trained model state dictionary
+[comparison.png](results/part3/comparison.png)	Comparison figure
+[comparison.pdf](results/part3/comparison.pdf)	PDF version of the comparison figure
+
+
+The model state dictionary requires the matching CatDogCNN class when reloaded. Rerunning the scripts overwrites the corresponding Part III result files.
+The Part III Video Log has been recorded separately to explain the implementation, training behavior, test results, and comparison limitations.
+10. Conclusion
+The laboratory progresses from a manually implemented NumPy MLP to image classification with a NumPy CNN and a GPU-enabled PyTorch CNN.
+Part III automatically trains on the prepared training set, evaluates large blocks of unseen images, measures processing time, and saves the relevant results. The recorded model achieves 80.89% test accuracy and an end-to-end test throughput of 223.62 images per second.
+Compared with the recorded Part II implementation, it achieves higher classification accuracy and faster testing. Differences in architecture, optimization, precision, feature reuse, and hardware mean that the full improvement cannot be attributed to GPU acceleration alone.
