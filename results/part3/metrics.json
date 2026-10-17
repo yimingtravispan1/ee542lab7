@@ -1,0 +1,29 @@
+{
+  "torch_version": "2.7.1+cu128",
+  "device": "cuda",
+  "gpu": "NVIDIA GeForce RTX 5070",
+  "model_seed": 42,
+  "class_mapping": {
+    "cat": 0,
+    "dog": 1
+  },
+  "train_images": 18708,
+  "test_images": 4678,
+  "epochs": 10,
+  "learning_rate": 0.001,
+  "train_batch_size": 64,
+  "test_block_size": 512,
+  "num_workers": 0,
+  "resize": "Pillow RGB BICUBIC",
+  "dtype": "float32",
+  "loss": "MSE",
+  "optimizer": "Adam",
+  "output_activation": "ReLU",
+  "prediction_threshold": 0.5,
+  "training_seconds": 308.9392296000151,
+  "test_seconds": 20.919041099987226,
+  "test_mse": 0.13995309682445886,
+  "test_accuracy": 0.8088926891834117,
+  "test_images_per_second": 223.62401687727726,
+  "timing_scope": "loading, preprocessing, transfer, computation"
+}
