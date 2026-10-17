@@ -1,6 +1,4 @@
-# Laboratory 7 Report - Parts I and II
-
-This report covers Parts I and II of `lab7.pdf`. Sections 1-7 cover Part I (pages 1-10); Section 8 answers the Part II evaluation tasks (pages 10-12). All numerical results come from actual local execution. Part III has not been started.
+# Laboratory 7 Report 
 
 Part I has no separate numbered question list. Sections 1-4 answer its explanatory points and discuss all three examples; Section 6 maps these responses to the PDF.
 
