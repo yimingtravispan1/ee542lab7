@@ -358,35 +358,7 @@ However, these results do not isolate the effect of GPU acceleration:
 
 These differences explain why Part III can have higher accuracy and faster testing while taking longer to train. The training-time comparison does not establish that GPU training is slower for an equivalent workload.
 
-A controlled GPU acceleration experiment would evaluate the same PyTorch model and weights on CPU and GPU on the same computer, using matched batch sizes, preprocessing, timing scope, and repeated measurements. This additional experiment was not performed.
 
-### 9.6 Reproduction and Deliverables
-
-Run the following commands from the project root in the configured environment:
-
-powershell
-.\.venv\Scripts\python.exe scripts/prepare_part2_data.py
-.\.venv\Scripts\python.exe src/part3.py
-.\.venv\Scripts\python.exe src/plot_comparison.py
-The recorded run uses PyTorch 2.7.1+cu128 and torchvision 0.22.1. For a fresh environment, install the repository dependencies and the GPU packages:
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe -m pip install torch==2.7.1 torchvision==0.22.1 --index-url https://download.pytorch.org/whl/cu128
-
-The script uses CUDA when available and otherwise falls back to CPU. Model seeds are fixed, but strict deterministic execution is not enabled. Timing and numerical results may vary across environments.
-File	Purpose
-[part3.py](src/part3.py)	CNN training, GPU evaluation, and result export
-[plot_comparison.py](src/plot_comparison.py)	Generate comparison charts
-[metrics.json](results/part3/metrics.json)	Configuration and aggregate results
-[losses.csv](results/part3/losses.csv)	Per-epoch training statistics
-[test_blocks.csv](results/part3/test_blocks.csv)	Per-block test statistics
-[model.pt](results/part3/model.pt)	Trained model state dictionary
-[comparison.png](results/part3/comparison.png)	Comparison figure
-[comparison.pdf](results/part3/comparison.pdf)	PDF version of the comparison figure
-
-
-The model state dictionary requires the matching CatDogCNN class when reloaded. Rerunning the scripts overwrites the corresponding Part III result files.
-The Part III Video Log has been recorded separately to explain the implementation, training behavior, test results, and comparison limitations.
 10. Conclusion
 The laboratory progresses from a manually implemented NumPy MLP to image classification with a NumPy CNN and a GPU-enabled PyTorch CNN.
 Part III automatically trains on the prepared training set, evaluates large blocks of unseen images, measures processing time, and saves the relevant results. The recorded model achieves 80.89% test accuracy and an end-to-end test throughput of 223.62 images per second.
