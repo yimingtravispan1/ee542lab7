@@ -359,7 +359,7 @@ However, these results do not isolate the effect of GPU acceleration:
 These differences explain why Part III can have higher accuracy and faster testing while taking longer to train. The training-time comparison does not establish that GPU training is slower for an equivalent workload.
 
 
-10. Conclusion
+### 10. Conclusion
 The laboratory progresses from a manually implemented NumPy MLP to image classification with a NumPy CNN and a GPU-enabled PyTorch CNN.
 Part III automatically trains on the prepared training set, evaluates large blocks of unseen images, measures processing time, and saves the relevant results. The recorded model achieves 80.89% test accuracy and an end-to-end test throughput of 223.62 images per second.
 Compared with the recorded Part II implementation, it achieves higher classification accuracy and faster testing. Differences in architecture, optimization, precision, feature reuse, and hardware mean that the full improvement cannot be attributed to GPU acceleration alone.
